@@ -1,22 +1,19 @@
 const { simple } = require("./simple");
 const { withPath, withQuery, withJSONBody, withMethod } = require("./fetch");
 
-/** @typedef {import("./fetch").FetchContextHandle} FetchContextHandle */
+/** @typedef {import("./simple").SimpleApp} SimpleApp */
 
 /**
  * Generates a simple data provider with CRUD methods for interacting with a given API base URL and handling X-Total-Count headers.
  *
- * @param {string} [base] - the base URL for the API
- * @param {string} [countHeader] - the header for the total count of items
- * @param {...FetchContextHandle[]} handles - optional handles for customizing the behavior of the data provider
+ * @param {SimpleApp} app - the simple application
  * @return {SimpleDataProvider} an object containing various CRUD methods for interacting with the API
  */
-function simpleDataProvider(
-  base = "/",
-  countHeader = "X-Total-Count",
-  ...handles
-) {
-  const { fetchOne, fetchMany } = simple(base, countHeader, ...handles);
+function simpleDataProvider(app) {
+  if (!app)
+    throw new Error("simpleDataProvider Error: simple app must be provided");
+
+  const { fetchOne, fetchMany } = app;
 
   return {
     getList: async (...args) => await getList(fetchMany, ...args),

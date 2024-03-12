@@ -1,5 +1,6 @@
 const { faker } = require("@faker-js/faker");
 const { simpleDataProvider } = require("./raProvider");
+const { simple } = require("./simple");
 const { withOriginFetch } = require("./fetch");
 
 describe("fetch-utils: raProvider", () => {
@@ -21,11 +22,8 @@ describe("fetch-utils: raProvider", () => {
 
     const originFetch = jest.fn();
     originFetch.mockResolvedValueOnce(getOneResponse);
-    const dataProvider = simpleDataProvider(
-      base,
-      undefined,
-      withOriginFetch(originFetch)
-    );
+    const app = simple(base, undefined, withOriginFetch(originFetch));
+    const dataProvider = simpleDataProvider(app);
 
     const results = await dataProvider.getOne(resource, { id });
 
