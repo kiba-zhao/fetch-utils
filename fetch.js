@@ -5,7 +5,7 @@
  */
 function newFetch(...baseHandles) {
   /** @type {FetchContext} */
-  const baseCtx = { fetch };
+  const baseCtx = { fetch: (...args) => fetch(...args) };
   for (const handle of baseHandles) {
     handle(baseCtx);
   }
