@@ -36,10 +36,11 @@ function newFetch(...baseHandles) {
       return await respond(res);
     }
 
+    const _responds = [...responds];
     if (respond) {
-      responds.push(respond);
+      _responds.push(respond);
     }
-    return await Promise.all(responds.map((_) => _(res)));
+    return await Promise.all(_responds.map((_) => _(res)));
   };
 }
 exports.newFetch = newFetch;
