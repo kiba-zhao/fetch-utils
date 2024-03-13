@@ -20,7 +20,7 @@ function simpleDataProvider(app) {
     getOne: async (...args) => await getOne(fetchOne, ...args),
     getMany: async (...args) => await getMany(fetchOne, ...args),
     getManyReference: async (...args) =>
-      await getManyReference(fetchOne, ...args),
+      await getManyReference(fetchMany, ...args),
     create: async (...args) => await create(fetchOne, ...args),
     update: async (...args) => await update(fetchOne, ...args),
     updateMany: async (...args) => await updateMany(fetchOne, ...args),
@@ -34,7 +34,7 @@ exports.simpleDataProvider = simpleDataProvider;
 function generateSortParams(sort) {
   const { field, order } = sort;
 
-  return { "sort-field": field, "sort-order": order };
+  return { _sort: field, _order: order };
 }
 
 function generateRangeParams(pagination) {
@@ -43,7 +43,7 @@ function generateRangeParams(pagination) {
   const rangeStart = (page - 1) * perPage;
   const rangeEnd = page * perPage - 1;
 
-  return { "range-start": rangeStart, "range-end": rangeEnd };
+  return { _start: rangeStart, _end: rangeEnd };
 }
 
 function extractId(data) {
