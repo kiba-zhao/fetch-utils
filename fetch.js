@@ -333,10 +333,10 @@ async function respondJSON(res) {
   }
   const contentType = res.headers.get("Content-Type");
   if (contentType && contentType.trim().startsWith("application/json")) {
-    return await res.json();
+    throw await res.json();
   }
   const message = await res.text();
-  return new Error(message);
+  throw new Error(message);
 }
 
 exports.respondJSON = respondJSON;
