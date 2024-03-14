@@ -32,6 +32,6 @@ describe("fetch-utils: raProvider", () => {
       `${base}/${resource}/${id}`,
       undefined
     );
-    expect(results).toEqual(getOneBody);
+    expect(results).toEqual({ data: getOneBody });
   });
 });

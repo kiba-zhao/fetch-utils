@@ -16,11 +16,11 @@ function simpleDataProvider(app) {
   const { fetchOne, fetchMany } = app;
 
   return {
-    getList: async (...args) => await getList(fetchMany, ...args),
+    getList: async (...args) => await getList(fetchOne, fetchMany, ...args),
     getOne: async (...args) => await getOne(fetchOne, ...args),
     getMany: async (...args) => await getMany(fetchOne, ...args),
     getManyReference: async (...args) =>
-      await getManyReference(fetchMany, ...args),
+      await getManyReference(fetchOne, fetchMany, ...args),
     create: async (...args) => await create(fetchOne, ...args),
     update: async (...args) => await update(fetchOne, ...args),
     updateMany: async (...args) => await updateMany(fetchOne, ...args),
@@ -31,19 +31,23 @@ function simpleDataProvider(app) {
 
 exports.simpleDataProvider = simpleDataProvider;
 
-function generateSortParams(sort) {
+function generateSortParams(sort, opts) {
   const { field, order } = sort;
 
-  return { _sort: field, _order: order };
+  const fieldKey = (opts && opts._sort) || "_sort";
+  const orderKey = (opts && opts._order) || "_order";
+  return { [fieldKey]: field, [orderKey]: order };
 }
 
-function generateRangeParams(pagination) {
+function generateRangeParams(pagination, opts) {
   const { page, perPage } = pagination;
 
   const rangeStart = (page - 1) * perPage;
   const rangeEnd = page * perPage - 1;
 
-  return { _start: rangeStart, _end: rangeEnd };
+  const startKey = (opts && opts._start) || "_start";
+  const endKey = (opts && opts._end) || "_end";
+  return { [startKey]: rangeStart, [endKey]: rangeEnd };
 }
 
 function extractId(data) {
@@ -52,55 +56,74 @@ function extractId(data) {
   return data.id;
 }
 
-async function getList(fetchMany, resource, params) {
+async function getList(fetchOne, fetchMany, resource, params) {
   const query = {
     ...params.filter,
-    ...generateSortParams(params.sort),
-    ...generateRangeParams(params.pagination),
+    ...generateSortParams(params.sort, params.meta),
+    ...generateRangeParams(params.pagination, params.meta),
   };
 
-  const [total, rows] = await fetchMany(
-    withPath(resource, "merge"),
-    withQuery(query, "merge")
-  );
+  const handles = [withPath(resource, "merge"), withQuery(query, "merge")];
+  let results;
+  if (params.meta && params.meta._count) {
+    results = await fetchOne(
+      ...handles,
+      withResponds([withHeaderRespond(params.meta._count, Number)], "merge")
+    );
+  } else {
+    results = await fetchMany(...handles);
+  }
+
+  const [total, rows] = results;
   return { data: rows, total };
 }
 
 async function getOne(fetchOne, resource, params) {
   const { id } = params;
-  return await fetchOne(withPath(`${resource}/${id}`, "merge"));
+  const row = await fetchOne(withPath(`${resource}/${id}`, "merge"));
+  return { data: row };
 }
 
 async function getMany(fetchOne, resource, params) {
   const { ids } = params;
-  return await fetchOne(
+  const row = await fetchOne(
     withPath(resource, "merge"),
     withQuery({ ids }, "merge")
   );
+  return { data: row };
 }
 
-async function getManyReference(fetchMany, resource, params) {
+async function getManyReference(fetchOne, fetchMany, resource, params) {
   const query = {
     ...params.filter,
     [params.target]: params.id,
-    ...generateSortParams(params.sort),
-    ...generateRangeParams(params.pagination),
+    ...generateSortParams(params.sort, params.meta),
+    ...generateRangeParams(params.pagination, params.meta),
   };
 
-  const [total, rows] = await fetchMany(
-    withPath(resource, "merge"),
-    withQuery(query, "merge")
-  );
+  const handles = [withPath(resource, "merge"), withQuery(query, "merge")];
+  let results;
+  if (params.meta && params.meta._count) {
+    results = await fetchOne(
+      ...handles,
+      withResponds([withHeaderRespond(params.meta._count, Number)], "merge")
+    );
+  } else {
+    results = await fetchMany(...handles);
+  }
+
+  const [total, rows] = results;
   return { data: rows, total };
 }
 
 async function update(fetchOne, resource, params) {
   const { id, data } = params;
-  return await fetchOne(
+  const row = await fetchOne(
     withPath(`${resource}/${id}`, "merge"),
     withMethod("PATCH"),
     withJSONBody(data)
   );
+  return { data: row };
 }
 
 async function updateMany(fetchOne, resource, params) {
@@ -111,24 +134,26 @@ async function updateMany(fetchOne, resource, params) {
     withMethod("PATCH"),
     withJSONBody({ data })
   );
-  return rows.map(extractId);
+  return { data: rows.map(extractId) };
 }
 
 async function create(fetchOne, resource, params) {
   const { data } = params;
-  return await fetchOne(
+  const row = await fetchOne(
     withPath(resource, "merge"),
     withMethod("POST"),
     withJSONBody(data)
   );
+  return { data: row };
 }
 
 async function deleteOne(fetchOne, resource, params) {
   const { id } = params;
-  return await fetchOne(
+  const row = await fetchOne(
     withPath(`${resource}/${id}`, "merge"),
     withMethod("DELETE")
   );
+  return { data: row };
 }
 
 async function deleteMany(fetchOne, resource, params) {
@@ -138,5 +163,5 @@ async function deleteMany(fetchOne, resource, params) {
     withQuery({ ids }, "merge"),
     withMethod("DELETE")
   );
-  return rows.map(extractId);
+  return { data: rows.map(extractId) };
 }
