@@ -40,6 +40,9 @@ function generateSortParams(sort, opts) {
 }
 
 function generateRangeParams(pagination, opts) {
+  if (opts && opts.noPagination === true) {
+    return {};
+  }
   const { page, perPage } = pagination;
 
   const rangeStart = (page - 1) * perPage;
