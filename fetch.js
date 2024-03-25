@@ -1,3 +1,5 @@
+const statuses = require("statuses");
+
 /**
  * create a new Fetch context
  * @param {FetchContextHandle[]} baseHandles - The handles to set FetchContext
@@ -336,7 +338,9 @@ async function respondJSON(res) {
     throw await res.json();
   }
   const message = await res.text();
-  throw new Error(message);
+  throw new Error(
+    message && message.length > 0 ? message : statuses(res.status)
+  );
 }
 
 exports.respondJSON = respondJSON;
