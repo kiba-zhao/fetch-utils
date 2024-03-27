@@ -9,7 +9,7 @@ function newFetch(...baseHandles) {
   /** @type {FetchContext} */
   const baseCtx = { fetch: (...args) => fetch(...args) };
   for (const handle of baseHandles) {
-    handle(baseCtx);
+    if (handle) handle(baseCtx);
   }
 
   return async (...handles) => {
@@ -17,7 +17,7 @@ function newFetch(...baseHandles) {
     const ctx = { ...baseCtx };
 
     for (const handle of handles) {
-      handle(ctx);
+      if (handle) handle(ctx);
     }
 
     const { paths, query, init, responds, respond } = ctx;
@@ -141,10 +141,10 @@ function withQuery(query, strategy) {
         ctx.query = params;
         return;
       }
-      ctx.query = new URLSearchParams(
-        ...ctx.query.entries(),
-        ...params.entries()
-      );
+      ctx.query = new URLSearchParams([
+        ...Array.from(ctx.query),
+        ...Array.from(params),
+      ]);
     };
   }
 

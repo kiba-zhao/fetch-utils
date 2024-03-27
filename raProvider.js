@@ -24,7 +24,7 @@ function simpleDataProvider(app) {
     create: async (...args) => await create(fetchOne, ...args),
     update: async (...args) => await update(fetchOne, ...args),
     updateMany: async (...args) => await updateMany(fetchOne, ...args),
-    deleteOne: async (...args) => await deleteOne(fetchOne, ...args),
+    delete: async (...args) => await deleteOne(fetchOne, ...args),
     deleteMany: async (...args) => await deleteMany(fetchOne, ...args),
   };
 }
@@ -59,6 +59,10 @@ function extractId(data) {
   return data.id;
 }
 
+function generateQueryParams(opts) {
+  return opts && opts.query ? opts.query : null;
+}
+
 async function getList(fetchOne, fetchMany, resource, params) {
   const query = {
     ...params.filter,
@@ -67,6 +71,11 @@ async function getList(fetchOne, fetchMany, resource, params) {
   };
 
   const handles = [withPath(resource, "merge"), withQuery(query, "merge")];
+  const paramsQuery = generateQueryParams(params.meta);
+  if (paramsQuery) {
+    handles.push(withQuery(paramsQuery, "merge"));
+  }
+
   let results;
   if (params.meta && params.meta._count) {
     results = await fetchOne(
@@ -83,15 +92,21 @@ async function getList(fetchOne, fetchMany, resource, params) {
 
 async function getOne(fetchOne, resource, params) {
   const { id } = params;
-  const row = await fetchOne(withPath(`${resource}/${id}`, "merge"));
+  const query = generateQueryParams(params.meta);
+  const row = await fetchOne(
+    withPath(`${resource}/${id}`, "merge"),
+    query && withQuery(query, "merge")
+  );
   return { data: row };
 }
 
 async function getMany(fetchOne, resource, params) {
   const { ids } = params;
+  const query = generateQueryParams(params.meta);
   const row = await fetchOne(
     withPath(resource, "merge"),
-    withQuery({ ids }, "merge")
+    withQuery({ ids }, "merge"),
+    query && withQuery(query, "merge")
   );
   return { data: row };
 }
@@ -105,6 +120,11 @@ async function getManyReference(fetchOne, fetchMany, resource, params) {
   };
 
   const handles = [withPath(resource, "merge"), withQuery(query, "merge")];
+  const paramsQuery = generateQueryParams(params.meta);
+  if (paramsQuery) {
+    handles.push(withQuery(paramsQuery, "merge"));
+  }
+
   let results;
   if (params.meta && params.meta._count) {
     results = await fetchOne(
@@ -121,50 +141,60 @@ async function getManyReference(fetchOne, fetchMany, resource, params) {
 
 async function update(fetchOne, resource, params) {
   const { id, data } = params;
+  const query = generateQueryParams(params.meta);
   const row = await fetchOne(
     withPath(`${resource}/${id}`, "merge"),
     withMethod("PATCH"),
-    withJSONBody(data)
+    withJSONBody(data),
+    query && withQuery(query, "merge")
   );
   return { data: row };
 }
 
 async function updateMany(fetchOne, resource, params) {
   const { ids, data } = params;
+  const query = generateQueryParams(params.meta);
   const rows = await fetchOne(
     withPath(resource, "merge"),
     withQuery({ ids }, "merge"),
     withMethod("PATCH"),
-    withJSONBody({ data })
+    withJSONBody({ data }),
+    query && withQuery(query, "merge")
   );
   return { data: rows.map(extractId) };
 }
 
 async function create(fetchOne, resource, params) {
   const { data } = params;
+  const query = generateQueryParams(params.meta);
   const row = await fetchOne(
     withPath(resource, "merge"),
     withMethod("POST"),
-    withJSONBody(data)
+    withJSONBody(data),
+    query && withQuery(query, "merge")
   );
   return { data: row };
 }
 
 async function deleteOne(fetchOne, resource, params) {
   const { id } = params;
+  const query = generateQueryParams(params.meta);
   const row = await fetchOne(
     withPath(`${resource}/${id}`, "merge"),
-    withMethod("DELETE")
+    withMethod("DELETE"),
+    query && withQuery(query, "merge")
   );
   return { data: row };
 }
 
 async function deleteMany(fetchOne, resource, params) {
   const { ids } = params;
+  const query = generateQueryParams(params.meta);
   const rows = await fetchOne(
     withPath(resource, "merge"),
     withQuery({ ids }, "merge"),
-    withMethod("DELETE")
+    withMethod("DELETE"),
+    query && withQuery(query, "merge")
   );
   return { data: rows.map(extractId) };
 }
