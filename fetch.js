@@ -136,7 +136,8 @@ exports.withRequestInit = withRequestInit;
 function withQuery(query, strategy) {
   if (strategy == "merge") {
     return (ctx) => {
-      const params = new URLSearchParams(query);
+      const params =
+        query instanceof URLSearchParams ? query : new URLSearchParams(query);
       if (!ctx.query) {
         ctx.query = params;
         return;
@@ -150,14 +151,16 @@ function withQuery(query, strategy) {
 
   if (strategy == "replace") {
     return (ctx) => {
-      ctx.query = new URLSearchParams(query);
+      ctx.query =
+        query instanceof URLSearchParams ? query : new URLSearchParams(query);
     };
   }
 
   return (ctx) => {
     if (ctx.query)
       throw new Error("withQuery Error: query has been set in context");
-    ctx.query = new URLSearchParams(query);
+    ctx.query =
+      query instanceof URLSearchParams ? query : new URLSearchParams(query);
   };
 }
 exports.withQuery = withQuery;

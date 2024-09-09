@@ -21,6 +21,7 @@ export type FetchQuery =
   | string
   | string[][]
   | Record<string, string>
+  | URLSearchParams
   | undefined;
 
 export type OriginFetch = typeof fetch;
