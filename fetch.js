@@ -1,4 +1,4 @@
-const statuses = require("statuses");
+const {FetchError} = require("./error");
 
 /**
  * create a new Fetch context
@@ -331,19 +331,13 @@ exports.withHeaderRespond = withHeaderRespond;
  *
  * @param {Response} res - the response object
  * @return {Promise} a promise that resolves to the JSON data if the response is ok
+ * @throws {FetchError} if the response is not ok
  */
 async function respondJSON(res) {
   if (res.ok) {
     return await res.json();
   }
-  const contentType = res.headers.get("Content-Type");
-  if (contentType && contentType.trim().startsWith("application/json")) {
-    throw await res.json();
-  }
-  const message = await res.text();
-  throw new Error(
-    message && message.length > 0 ? message : statuses(res.status)
-  );
+  throw new FetchError(res);
 }
 
 exports.respondJSON = respondJSON;

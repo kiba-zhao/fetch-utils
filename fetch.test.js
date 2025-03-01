@@ -1,10 +1,12 @@
 const { faker } = require("@faker-js/faker");
+const {FetchError} = require("./error");
 const {
   default: defaultFetch,
   withPath,
   withMethod,
   withRespond,
   withQuery,
+  respondJSON,
 } = require("./fetch");
 
 describe("fetch-utils: fetch", () => {
@@ -41,5 +43,18 @@ describe("fetch-utils: fetch", () => {
     expect(respond).toHaveBeenCalledTimes(1);
     expect(respond).toHaveBeenCalledWith(spyResponse);
     expect(results).toEqual(resData);
+  });
+
+  it("respondJSON with error", async () => {
+
+    const status = faker.helpers.arrayElement([400, 500]);
+    const res = new Response(null,{status});
+
+    const promise = respondJSON(res);
+    expect(promise).rejects.toThrow(FetchError);
+
+    /** @type {FetchError} */
+    const error = await promise.catch((e) => e);
+    expect(error.response).toEqual(res);
   });
 });
