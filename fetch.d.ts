@@ -1,3 +1,4 @@
+import type { FetchError } from "./error";
 export interface FetchContext {
   paths?: string[];
   query?: URLSearchParams;
@@ -162,6 +163,7 @@ export function withHeaderRespond(
  *
  * @param {Response} res - The Response object to be processed
  * @return {Promise<any>} A Promise that resolves with the JSON data in the response body
+ * @throws {FetchError} if the response is not ok
  */
 export function respondJSON(res: Response): Promise<any>;
 
